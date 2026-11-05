@@ -36,7 +36,36 @@ class _TelaInicialState extends State<TelaInicial> {
   final TextEditingController pesquisaController =
   TextEditingController();
 
+  String? mensagemErro;
+  String? termoPesquisado;
+
   int paginaSelecionada = 0;
+
+  void pesquisarReceita() {
+    final termo = pesquisaController.text.trim();
+
+    setState(() {
+      if (termo.isEmpty) {
+        mensagemErro =
+        'Digite o nome de uma receita para realizar a pesquisa.';
+        termoPesquisado = null;
+        return;
+      }
+
+      mensagemErro = null;
+      termoPesquisado = termo;
+    });
+
+    FocusScope.of(context).unfocus();
+
+    if (termo.isEmpty) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Pesquisa realizada: $termo'),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -51,7 +80,6 @@ class _TelaInicialState extends State<TelaInicial> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
@@ -93,11 +121,13 @@ class _TelaInicialState extends State<TelaInicial> {
 
                     const SizedBox(height: 24),
 
-                    // Busca
+                    // Campo de pesquisa
                     TextField(
                       controller: pesquisaController,
                       decoration: InputDecoration(
-                        hintText: 'Buscar Receitas',
+                        labelText: 'Nome da receita',
+                        hintText: 'Ex: Bolo de cenoura',
+                        errorText: mensagemErro,
                         prefixIcon: const Icon(
                           Icons.search,
                           color: Color(0xFF617067),
@@ -119,28 +149,24 @@ class _TelaInicialState extends State<TelaInicial> {
                           ),
                         ),
                       ),
+                      onChanged: (valor) {
+                        if (mensagemErro != null) {
+                          setState(() {
+                            mensagemErro = null;
+                          });
+                        }
+                      },
+                      onSubmitted: (_) => pesquisarReceita(),
                     ),
 
                     const SizedBox(height: 12),
 
-                    // Botão de busca
+                    // Botão de pesquisa
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: () {
-                          FocusScope.of(context).unfocus();
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                pesquisaController.text.trim().isEmpty
-                                    ? 'Digite o nome de uma receita.'
-                                    : 'Pesquisa: ${pesquisaController.text}',
-                              ),
-                            ),
-                          );
-                        },
+                        onPressed: pesquisarReceita,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFC90000),
                           foregroundColor: Colors.white,
@@ -150,7 +176,7 @@ class _TelaInicialState extends State<TelaInicial> {
                           ),
                         ),
                         child: const Text(
-                          'Buscar',
+                          'Pesquisar receita',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -158,6 +184,30 @@ class _TelaInicialState extends State<TelaInicial> {
                         ),
                       ),
                     ),
+
+                    const SizedBox(height: 20),
+
+                    // Resp da pesquisa
+                    if (termoPesquisado != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: const Color(0xFFDCDDD3),
+                          ),
+                        ),
+                        child: Text(
+                          'Você pesquisou por: "$termoPesquisado"',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF617067),
+                          ),
+                        ),
+                      ),
 
                     const SizedBox(height: 28),
 
@@ -226,9 +276,7 @@ class _TelaInicialState extends State<TelaInicial> {
                                     color: Color(0xFFC90000),
                                   ),
                                 ),
-
                                 const SizedBox(height: 18),
-
                                 const Text(
                                   '25 min  •  Fácil',
                                   style: TextStyle(
@@ -236,9 +284,7 @@ class _TelaInicialState extends State<TelaInicial> {
                                     color: Color(0xFF617067),
                                   ),
                                 ),
-
                                 const SizedBox(height: 10),
-
                                 const Text(
                                   '5 / 5',
                                   style: TextStyle(
@@ -254,7 +300,8 @@ class _TelaInicialState extends State<TelaInicial> {
                           // Ícone de favorito
                           IconButton(
                             onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(
                                 const SnackBar(
                                   content: Text(
                                     'Receita adicionada aos favoritos!',
