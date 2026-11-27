@@ -66,6 +66,7 @@ class _TelaInicialState extends State<TelaInicial> {
     carregarReceitas();
   }
 
+
   // Buscar receitas na API
   Future<void> carregarReceitas() async {
     setState(() {
@@ -93,7 +94,7 @@ class _TelaInicialState extends State<TelaInicial> {
     });
   }
 
-  // Filtros
+
   List<Receitas> get receitasFiltradas {
     if (termoPesquisado == null ||
         termoPesquisado!.isEmpty) {
