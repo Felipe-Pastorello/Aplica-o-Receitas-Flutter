@@ -27,10 +27,12 @@ class EstadoCarregamento extends StatelessWidget {
 
 class EstadoErro extends StatelessWidget {
   final VoidCallback onTentarNovamente;
+  final String mensagem;
 
   const EstadoErro({
     super.key,
     required this.onTentarNovamente,
+    required this.mensagem,
   });
 
   @override
@@ -69,10 +71,10 @@ class EstadoErro extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            const Text(
-              'Verifique sua conexão e tente novamente.',
+            Text(
+              mensagem,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Color(0xFF617067),
               ),
             ),

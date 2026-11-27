@@ -40,9 +40,26 @@ class CartaoReceita extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Center(
-                child: Text(
-                  receita.imagem,
-                  style: const TextStyle(fontSize: 48),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.network(
+                    receita.imagem,
+                    width: 100,
+                    height: 110,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const SizedBox(
+                        width: 100,
+                        height: 110,
+                        child: Center(
+                          child: Text(
+                            '🍽️',
+                            style: TextStyle(fontSize: 40),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),

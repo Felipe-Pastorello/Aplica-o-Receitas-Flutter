@@ -6,6 +6,8 @@ import 'telas/tela_detalhes.dart';
 import 'telas/tela_favoritos.dart';
 import 'telas/tela_pesquisa.dart';
 import 'widgets/cartao_receita.dart';
+import 'services/receitas_api.dart';
+import 'widgets/estados_receitas.dart';
 
 void main() {
   runApp(const SaboreApp());
@@ -45,88 +47,53 @@ class _TelaInicialState extends State<TelaInicial> {
 
   String? mensagemErro;
   String? termoPesquisado;
+  String? erroApi;
 
   int paginaSelecionada = 0;
 
   // LISTA DE RECEITAS
-  final List<Receitas> receitas = [
-    Receitas(
-      nome: 'Classic Margherita Pizza',
-      categoria: 'Italiana',
-      dificuldade: 'Fácil',
-      tempo: '35 min',
-      avaliacao: '4,6',
-      porcoes: 4,
-      imagem: '🍕',
-      ingredientes: [
-        'Massa de pizza',
-        'Molho de tomate',
-        'Muçarela fresca',
-        'Tomates',
-        'Manjericão',
-      ],
-      preparo: [
-        'Preaqueça o forno a 245 °C.',
-        'Espalhe o molho de tomate sobre a massa.',
-        'Adicione a muçarela e os tomates.',
-        'Leve ao forno até dourar.',
-        'Finalize com manjericão.',
-      ],
-    ),
-
-    Receitas(
-      nome: 'Hambúrguer Caseiro',
-      categoria: 'Lanches',
-      dificuldade: 'Fácil',
-      tempo: '25 min',
-      avaliacao: '5,0',
-      porcoes: 2,
-      imagem: '🍔',
-      ingredientes: [
-        'Pão de hambúrguer',
-        'Carne moída',
-        'Queijo',
-        'Alface',
-        'Tomate',
-      ],
-      preparo: [
-        'Modele a carne em formato de hambúrguer.',
-        'Tempere a carne a gosto.',
-        'Grelhe dos dois lados.',
-        'Adicione o queijo.',
-        'Monte o hambúrguer com os acompanhamentos.',
-      ],
-    ),
-
-    Receitas(
-      nome: 'Bolo de Cenoura',
-      categoria: 'Sobremesas',
-      dificuldade: 'Médio',
-      tempo: '50 min',
-      avaliacao: '4,9',
-      porcoes: 8,
-      imagem: '🍰',
-      ingredientes: [
-        '3 cenouras',
-        '3 ovos',
-        '2 xícaras de farinha',
-        '1 xícara de açúcar',
-        'Fermento',
-      ],
-      preparo: [
-        'Bata as cenouras, os ovos e o óleo.',
-        'Misture os ingredientes secos.',
-        'Adicione a mistura líquida.',
-        'Coloque em uma forma untada.',
-        'Asse até ficar dourado.',
-      ],
-    ),
-  ];
+  List<Receitas> receitas = [];
 
   // LISTA DE FAVORITOS
   final List<Receitas> favoritos = [];
 
-  // FILTRAR RECEITAS
+  // CONTROLE DE CARREGAMENTO
+  bool carregando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    carregarReceitas();
+  }
+
+  // Buscar receitas na API
+  Future<void> carregarReceitas() async {
+    setState(() {
+      carregando = true;
+      erroApi = null;
+    });
+
+    final resposta = await buscarReceitas();
+
+    if (!mounted) return;
+
+    setState(() {
+      if (resposta.erro != null) {
+        erroApi = resposta.erro;
+        receitas = [];
+      } else {
+        receitas = resposta.receitas.map((item) {
+          return Receitas.fromJson(
+            Map<String, dynamic>.from(item),
+          );
+        }).toList();
+      }
+
+      carregando = false;
+    });
+  }
+
+  // Filtros
   List<Receitas> get receitasFiltradas {
     if (termoPesquisado == null ||
         termoPesquisado!.isEmpty) {
@@ -140,7 +107,7 @@ class _TelaInicialState extends State<TelaInicial> {
     }).toList();
   }
 
-  // PESQUISAR RECEITA
+  // Pesquisar receita
   void pesquisarReceita() {
     final termo = pesquisaController.text.trim();
 
@@ -167,7 +134,7 @@ class _TelaInicialState extends State<TelaInicial> {
     );
   }
 
-  // ADICIONAR OU REMOVER FAVORITO
+  // Add e Remover dos Favoritos
   void alternarFavorito(Receitas receita) {
     setState(() {
       if (favoritos.contains(receita)) {
@@ -178,7 +145,7 @@ class _TelaInicialState extends State<TelaInicial> {
     });
   }
 
-  // ABRIR DETALHES DA RECEITA
+  // Tela de Detalhes da Pesquisa
   void abrirReceita(Receitas receita) {
     Navigator.push(
       context,
@@ -192,11 +159,13 @@ class _TelaInicialState extends State<TelaInicial> {
         ),
       ),
     ).then((_) {
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
-  // ABRIR TELA DE PESQUISA
+
   void abrirPesquisa() {
     Navigator.push(
       context,
@@ -209,7 +178,9 @@ class _TelaInicialState extends State<TelaInicial> {
         ),
       ),
     ).then((_) {
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -226,7 +197,7 @@ class _TelaInicialState extends State<TelaInicial> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // HEADER
+            // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 24, 24, 24, 16,
@@ -247,14 +218,7 @@ class _TelaInicialState extends State<TelaInicial> {
                         ),
                       ),
 
-                      // ACESSAR PESQUISA
-                      IconButton(
-                        onPressed: abrirPesquisa,
-                        icon: const Icon(
-                          Icons.search,
-                          color: Color(0xFFC90000),
-                        ),
-                      ),
+                      // Acessar Pesquisa
                     ],
                   ),
 
@@ -268,10 +232,17 @@ class _TelaInicialState extends State<TelaInicial> {
               ),
             ),
 
-            // CONTEÚDO PRINCIPAL
+            // Main
             Expanded(
               child: paginaSelecionada == 0
-                  ? telaExplorar()
+                  ? carregando
+                  ? const EstadoCarregamento()
+                  : erroApi != null
+                  ? EstadoErro(
+                mensagem: erroApi!,
+                onTentarNovamente: carregarReceitas,
+              )
+                  : telaExplorar()
                   : TelaFavoritos(
                 favoritos: favoritos,
                 onFavorito: alternarFavorito,
@@ -282,7 +253,7 @@ class _TelaInicialState extends State<TelaInicial> {
         ),
       ),
 
-      // FOOTER
+      // Footer
       bottomNavigationBar: NavigationBar(
         selectedIndex: paginaSelecionada,
         backgroundColor: Colors.white,
@@ -306,7 +277,7 @@ class _TelaInicialState extends State<TelaInicial> {
     );
   }
 
-  // TELA INICIAL / EXPLORAR
+  // Tela Inicial
   Widget telaExplorar() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -324,7 +295,7 @@ class _TelaInicialState extends State<TelaInicial> {
 
           const SizedBox(height: 24),
 
-          // CAMPO DE PESQUISA
+          // Campo de Pesquisa
           TextField(
             controller: pesquisaController,
             decoration: InputDecoration(
@@ -364,7 +335,7 @@ class _TelaInicialState extends State<TelaInicial> {
 
           const SizedBox(height: 12),
 
-          // BOTÃO DE PESQUISA
+          // Botão Pesquisa
           SizedBox(
             width: double.infinity,
             height: 48,
@@ -390,7 +361,7 @@ class _TelaInicialState extends State<TelaInicial> {
 
           const SizedBox(height: 20),
 
-          // RESULTADO DA PESQUISA
+          // Resultados da pesquisa
           if (termoPesquisado != null)
             Container(
               width: double.infinity,
@@ -437,7 +408,7 @@ class _TelaInicialState extends State<TelaInicial> {
 
           const SizedBox(height: 18),
 
-          // LISTA DE RECEITAS
+          // Listar receitas
           if (receitasFiltradas.isEmpty)
             const Center(
               child: Padding(
@@ -467,7 +438,7 @@ class _TelaInicialState extends State<TelaInicial> {
               ),
             ),
 
-          // LIMPAR PESQUISA
+          // Limpar Pesquisa
           if (termoPesquisado != null)
             SizedBox(
               width: double.infinity,
